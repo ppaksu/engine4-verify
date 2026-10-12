@@ -1,9 +1,10 @@
-"""요청 입력 → Claude가 엔진 코드 작성/수정 → 생성 → 검증 → 실패하면 분석을 붙여 재요청.
+"""요청 입력 → Claude가 엔진 코드 작성/수정 → 생성 → 검증 → 실패하면 분석을 붙여 통과할 때까지 재요청.
 
 make  (또는 uv run agent.py)
 engine/make_engine.py 가 없으면 첫 요청으로 처음부터 만든다.
 빈 줄 입력 = AI 없이 현재 코드로 생성, 검증, 그림만.
 매 시도는 prompts/log.csv 에 한 줄씩, 코드는 prompts/attempts/ 에 남는다.
+멈추려면 Ctrl+C: 요청 전 상태로 되돌린다. 횟수 제한이 필요하면 MAX_TRIES=5 make.
 """
 import csv
 import os
@@ -19,7 +20,7 @@ ENGINE = ROOT / "engine" / "make_engine.py"
 PARTS = ROOT / "parts"
 LOG = ROOT / "prompts" / "log.csv"
 ATTEMPTS = ROOT / "prompts" / "attempts"
-MAX_TRIES = int(os.environ.get("MAX_TRIES", 3))
+MAX_TRIES = int(os.environ.get("MAX_TRIES", 0))   # 0 = 통과할 때까지
 MODEL = os.environ.get("CLAUDE_MODEL", "opus")
 
 SYSTEM = """너는 학교 3D 프린팅 과제를 돕는 CAD 엔지니어다.
@@ -149,39 +150,24 @@ def main():
     ENGINE.parent.mkdir(exist_ok=True)
     ATTEMPTS.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    feedback, first = "", None
-    for n in range(1, MAX_TRIES + 1):
-        print(f"\n[{n}/{MAX_TRIES}] Claude 가 코드를 쓰는 중...")
-        current = ENGINE.read_text() if ENGINE.exists() else None
-        prompt = ((f"현재 engine/make_engine.py:\n```python\n{current}\n```\n\n" if current
-                   else "아직 코드가 없다. 처음부터 작성한다.\n\n") + f"요청: {request}\n"
-                  + (f"\n직전 시도가 검증에 실패했다. 아래 분석(측정값, 기준, 위치, 고칠 점)대로 고쳐라:\n{feedback}\n"
-                     if feedback else ""))
-        try:
-            reply = ask_claude(prompt)
-        except (RuntimeError, subprocess.TimeoutExpired) as e:
-            print(e)
-            break
-        blocks = re.findall(r"```python\n(.*?)```", reply, re.S)
-        attempt_file = ATTEMPTS / f"{stamp}_{n}.py"
-        if not blocks:
-            attempt_file.write_text(reply)
-            feedback = "답에 ```python 코드 블록이 없었다. 파일 전체를 코드 블록 하나로 내라."
-            first = first or "코드 블록 없이 답함 (코드를 만들지 못함)"
-            log(request if n == 1 else f"{request} (재시도 {n})", "실패: 코드 블록 없음", attempt_file)
-            continue
-        code = max(blocks, key=len)
-        attempt_file.write_text(code)
-        ENGINE.write_text(code)
-        log(request if n == 1 else f"{request} (재시도 {n}, 직전 분석 전달)", "검증 중", attempt_file)
-        ok, out = build_and_verify()
-        feedback = analysis(out)
-        first = first or feedback
-        set_result(ok, "검증 통과" if ok else " / ".join(ln.strip() for ln in feedback.splitlines() if ln.startswith("["))[:200])
-        if ok:
-            run(str(ROOT / "render.py"))
-            report_first(request, first, f"{n}회차에서 통과. reports/report.md, reports/engine.gif")
-            return
+    feedback, first, n = "", None, 0
+    try:
+        while not MAX_TRIES or n < MAX_TRIES:
+            n += 1
+            ok = attempt(request, n, stamp, feedback)
+            feedback, first = ok[1], first or ok[1]
+            if ok[0]:
+                run(str(ROOT / "render.py"))
+                report_first(request, first, f"{n}회차에서 통과. reports/report.md, reports/engine.gif")
+                return
+        why = f"{MAX_TRIES}회 모두 실패"
+    except KeyboardInterrupt:
+        if LOG.exists() and LOG.read_text().rstrip().split("\n")[-1].count("검증 중"):
+            set_result(False, "Ctrl+C 로 중단")
+        why = f"{n}회차에서 Ctrl+C 로 중단"
+    except (RuntimeError, subprocess.TimeoutExpired) as e:
+        print(e)
+        why = f"{n}회차에서 Claude 호출 실패"
     if original is None:
         ENGINE.unlink(missing_ok=True)
         shutil.rmtree(PARTS, ignore_errors=True)
@@ -190,8 +176,33 @@ def main():
         ENGINE.write_text(original)
         build_and_verify()
         back = "원래 설계로 되돌림"
-    report_first(request, first, f"{MAX_TRIES}회 모두 실패, {back}. 시도 코드는 prompts/attempts/")
+    report_first(request, first, f"{why}, {back}. 시도 코드는 prompts/attempts/")
     sys.exit(1)
+
+
+def attempt(request, n, stamp, feedback):
+    """한 번 시도: Claude 호출 → 저장 → 생성·검증. (통과 여부, 분석) 을 돌려준다."""
+    print(f"\n[{n}회차{'' if not MAX_TRIES else f' / 최대 {MAX_TRIES}'}] Claude 가 코드를 쓰는 중... (멈추려면 Ctrl+C)")
+    current = ENGINE.read_text() if ENGINE.exists() else None
+    prompt = ((f"현재 engine/make_engine.py:\n```python\n{current}\n```\n\n" if current
+               else "아직 코드가 없다. 처음부터 작성한다.\n\n") + f"요청: {request}\n"
+              + (f"\n직전 시도가 검증에 실패했다. 아래 분석(측정값, 기준, 위치, 고칠 점)대로 고쳐라:\n{feedback}\n"
+                 if feedback else ""))
+    reply = ask_claude(prompt)
+    blocks = re.findall(r"```python\n(.*?)```", reply, re.S)
+    attempt_file = ATTEMPTS / f"{stamp}_{n}.py"
+    if not blocks:
+        attempt_file.write_text(reply)
+        log(request if n == 1 else f"{request} (재시도 {n})", "실패: 코드 블록 없음", attempt_file)
+        return False, "답에 ```python 코드 블록이 없었다. 파일 전체를 코드 블록 하나로 내라."
+    code = max(blocks, key=len)
+    attempt_file.write_text(code)
+    ENGINE.write_text(code)
+    log(request if n == 1 else f"{request} (재시도 {n}, 직전 분석 전달)", "검증 중", attempt_file)
+    ok, out = build_and_verify()
+    text = analysis(out)
+    set_result(ok, "검증 통과" if ok else " / ".join(ln.strip() for ln in text.splitlines() if ln.startswith("["))[:200])
+    return ok, text
 
 
 def report_first(request, first, outcome):
