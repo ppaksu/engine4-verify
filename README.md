@@ -4,7 +4,7 @@
 
 ![참고 엔진](docs/engine.gif)
 
-*검증기 테스트용 참고 엔진 (`tests/reference_engine.py`), 크랭크 1회전. 노란색이 크랭크핀*
+*검증기 테스트용 참고 엔진 (`tests/reference_engine.py`). 4행정 한 사이클(크랭크 2회전) 동안 폭발 중인 피스톤이 빨간색으로 1-3-4-2 순서로 바뀐다. 노란색은 크랭크핀*
 
 ## 명령 하나
 
@@ -42,7 +42,7 @@ make
 | `make check` | AI 없이 생성 → 검증 → 그림 |
 | `make build` | `engine/make_engine.py` 로 `parts/*.step`, `parts/*.stl`, `parts/assembly.json` 생성 |
 | `make verify` | `uv run verify.py`, 모든 단계 검증 (`--skip 6,7` 로 단계 건너뛰기) |
-| `make render` | `reports/engine.png`, `reports/engine.gif` 생성 (크랭크 10° 간격 1회전) |
+| `make render` | `reports/engine.png`, `reports/engine.gif` 생성 (크랭크 10° 간격 2회전, 폭발 피스톤 빨간색) |
 | `make test` | 검증기 자체 테스트: 참고 엔진은 통과, 일부러 망가뜨린 4종은 FAIL 인지 |
 | `make clean` | 결과물(`parts/`, `reports/`) 삭제. `make check` 로 다시 만들 수 있음 |
 | `make reset` | 처음 상태로: 엔진 코드, `prompts/log.csv`, `prompts/attempts/` 까지 삭제 (y 확인) |

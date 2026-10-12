@@ -1,4 +1,5 @@
-"""발표용 그림: reports/engine.png (조립도), reports/engine.gif (크랭크 1회전).
+"""발표용 그림: reports/engine.png (조립도), reports/engine.gif (크랭크 2회전 = 4행정 한 사이클).
+폭발 행정 중인 피스톤을 빨갛게 칠해 점화 순서를 보인다.
 uv run render.py [--parts parts] [--out reports]
 """
 import argparse
@@ -22,6 +23,7 @@ PARTS = ROOT / "parts"
 COLORS = {"block": "#9aa5b1", "cover": "#cfe8ff", "base": "#6b5b4b", "bearing": "#c08040",
           "rod": "#2f6fd6", "piston": "#e0e0e0", "pistonpin": "#444444", "handle": "#d64545",
           "crankpin": "#f2b134"}   # 크랭크핀만 다른 색: 둥근 웹이라도 회전이 보이게
+FIRE = "#e4572e"           # 폭발 행정 중인 피스톤
 LIGHT = np.array([-0.4, -0.6, 0.7]) / np.linalg.norm([-0.4, -0.6, 0.7])
 
 
@@ -47,14 +49,34 @@ def limits(meshes):
     return lo, hi
 
 
+def fire_angles(kin):
+    """폭발 순서대로 720/n 도마다 점화. 각 실린더의 상사점과 맞는지 확인."""
+    order = kin.get("firing_order", [1, 3, 4, 2])
+    phase = {c["id"]: c["phase"] for c in kin["cylinders"]}
+    angles = {cyl: 720 * k / len(order) for k, cyl in enumerate(order)}
+    for cyl, a in angles.items():   # 상사점: theta + phase = 0 (mod 360)
+        if (a + phase[cyl]) % 360:
+            print(f"경고: {cyl}번 점화 {a:.0f}도가 상사점과 안 맞음 (위상 {phase[cyl]})")
+    return angles
+
+
+def firing(angles, deg):
+    """지금 폭발 행정(점화 후 180도) 중인 실린더."""
+    return next((c for c, a in angles.items() if 0 <= (deg - a) % 720 < 180), None)
+
+
 def draw(ax, asm, meshes, theta):
     ax.cla()
-    T = poses(asm["kinematics"], theta)
+    kin = asm["kinematics"]
+    T = poses(kin, theta)
+    deg = math.degrees(theta)
+    hot = firing(fire_angles(kin), deg)
     tris, cols = [], []
     for name, (m, motion) in meshes.items():
         tris.append(trimesh.transform_points(m.vertices, T[motion])[m.faces])
         shade = 0.45 + 0.55 * np.clip((m.face_normals @ T[motion][:3, :3].T) @ LIGHT, 0, 1)
-        rgba = np.tile([*to_rgb(color(name)), 0.18 if name == "block" else 1.0], (len(m.faces), 1))
+        base = FIRE if motion == f"piston:{hot}" else color(name)
+        rgba = np.tile([*to_rgb(base), 0.18 if name == "block" else 1.0], (len(m.faces), 1))
         rgba[:, :3] *= shade[:, None]
         cols.append(rgba)
     # 한 컬렉션에 모아야 부품 단위가 아니라 면 단위로 앞뒤가 정렬된다
@@ -64,7 +86,8 @@ def draw(ax, asm, meshes, theta):
     ax.set_box_aspect(hi - lo, zoom=1.3)
     ax.view_init(elev=18, azim=-60)
     ax.set_axis_off()
-    ax.set_title(f"crank {math.degrees(theta):.0f} deg (firing order 1-3-4-2)")
+    order = "-".join(map(str, kin.get("firing_order", [1, 3, 4, 2])))
+    ax.set_title(f"crank {deg:.0f} deg   power stroke: cylinder {hot}   (firing order {order})", fontsize=13)
 
 
 def main():
@@ -79,7 +102,7 @@ def main():
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
     fig.savefig(out / "engine.png", dpi=120, bbox_inches="tight")
-    frames = [math.radians(d) for d in range(0, 360, 10)]
+    frames = [math.radians(d) for d in range(0, 720, 10)]   # 4행정 한 사이클 = 2회전
     FuncAnimation(fig, lambda t: draw(ax, asm, meshes, t), frames=frames).save(
         out / "engine.gif", writer=PillowWriter(fps=12))
     print(f"{out / 'engine.png'}, {out / 'engine.gif'}")
