@@ -1,5 +1,5 @@
 """검증기가 진짜 잡는지 확인한다.
-정상 엔진은 0~5단계 통과, 일부러 망가뜨린 엔진은 해당 단계가 FAIL 이어야 한다.
+참고 엔진(tests/reference_engine.py)은 0~5단계 통과, 일부러 망가뜨린 엔진은 해당 단계가 FAIL 이어야 한다.
 
 uv run --group demo python tests/check_pipeline.py
 """
@@ -9,8 +9,8 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "engine"))
-import make_engine as e  # noqa: E402
+sys.path.insert(0, str(ROOT / "tests"))
+import reference_engine as e  # noqa: E402
 
 
 def bump_under_cylinder_2():
@@ -34,7 +34,8 @@ def run(label, mutate, expect_fail):
         mutate()
     with tempfile.TemporaryDirectory() as tmp:
         e.main(tmp)
-        p = subprocess.run([sys.executable, str(ROOT / "verify.py"), "--parts", tmp, "--skip", "6,7"],
+        p = subprocess.run([sys.executable, str(ROOT / "verify.py"), "--parts", tmp, "--skip", "6,7",
+                            "--log", str(ROOT / "tests" / "reference_log.csv")],
                            capture_output=True, text=True)
     vars(e).update(saved)
     failed = {ln.split("]")[1].strip().split(".")[0] for ln in p.stdout.splitlines() if ln.startswith("[FAIL]")}

@@ -1,6 +1,6 @@
-# 손으로 돌리는 4기통 엔진 원리 모형 + 검증 파이프라인
+# 손으로 돌리는 4기통 엔진 원리 모형: 프롬프트 → 생성 → 검증 파이프라인
 
-![엔진](reports/engine.gif)
+엔진은 들어 있지 않다. 팀이 프롬프트를 넣어 처음부터 만든다.
 
 ## 명령 하나
 
@@ -8,13 +8,18 @@
 make
 ```
 
-`요청>` 입력란이 나온다. 바꾸고 싶은 점을 적으면 다음을 반복한다:
+`요청>` 입력란이 나온다.
 
-1. Claude 가 `engine/make_engine.py` 를 고친다 (`claude -p`, 도구 없이 코드만 생성)
+- `engine/make_engine.py` 가 없으면 첫 요청으로 **처음부터** 만든다
+- 있으면 요청대로 **고친다** (빈 줄 = AI 없이 현재 설계로 검증만)
+
+그다음 반복:
+
+1. Claude 가 `engine/make_engine.py` 를 쓴다 (`claude -p`, 도구 없이 코드만 생성)
 2. CadQuery 로 부품 생성 → 검증 0~7단계
-3. 실패하면 실패 줄을 붙여 다시 요청 (최대 3회, `MAX_TRIES=5 make` 로 변경)
-4. 통과하면 그림 생성. 3회 모두 실패하면 원래 설계로 되돌림
-5. 마지막에 **첫 시도 분석**을 출력: 처음 만든 결과가 어떤 기준을 어겼는지, 측정값, 위치, 고칠 값. `reports/first_attempt.md` 에도 저장됨
+3. 실패하면 문제 분석을 붙여 다시 요청 (최대 3회, `MAX_TRIES=5 make` 로 변경)
+4. 통과하면 그림 생성. 모두 실패하면 요청 전 상태로 되돌림
+5. 마지막에 **첫 시도 분석** 출력: 처음 만든 결과가 어떤 기준을 어겼는지, 측정값, 위치, 고칠 값. `reports/first_attempt.md` 에도 저장
 
 ```
 ==== 첫 시도 분석 ====
@@ -26,11 +31,7 @@ make
 결과: 2회차에서 통과
 ```
 
-같은 분석이 재시도 요청에 그대로 붙어서 Claude 가 무엇을 얼마나 고칠지 안다. `uv run verify.py` 만 돌려도 끝에 `문제 분석` 이 나오고 `reports/report.md` 맨 위에 들어간다.
-
-매 시도는 `prompts/log.csv` 에 한 줄씩 자동 기록되고, 시도한 코드는 `prompts/attempts/` 에 남는다. 빈 줄을 입력하면 AI 없이 현재 설계로 생성, 검증, 그림만 한다.
-
-예: `크랭크축이 앞뒤로 움직이는 문제를 고정 칼라로 막아줘`, `피스톤 지름을 24mm 로 키워줘`
+매 시도는 `prompts/log.csv` 에 한 줄씩 자동 기록되고 (실패 포함), 시도한 코드는 `prompts/attempts/` 에 남는다.
 
 | 명령 | 하는 일 |
 |---|---|
@@ -38,11 +39,13 @@ make
 | `make build` | `engine/make_engine.py` 로 `parts/*.step`, `parts/*.stl`, `parts/assembly.json` 생성 |
 | `make verify` | `uv run verify.py`, 모든 단계 검증 (`--skip 6,7` 로 단계 건너뛰기) |
 | `make render` | `reports/engine.png`, `reports/engine.gif` 생성 |
-| `make test` | 일부러 망가뜨린 엔진 4종을 검증기가 잡는지 확인 |
+| `make test` | 검증기 자체 테스트: 참고 엔진은 통과, 일부러 망가뜨린 4종은 FAIL 인지 |
+| `make clean` | 결과물(`parts/`, `reports/`) 삭제. `make check` 로 다시 만들 수 있음 |
+| `make reset` | 처음 상태로: 엔진 코드, `prompts/log.csv`, `prompts/attempts/` 까지 삭제 (y 확인) |
 
-AI 가 만든 코드는 이 PC 에서 그대로 실행된다. 결과는 `git diff` 로 확인하고 커밋한다.
+AI 가 만든 코드는 이 PC 에서 그대로 실행된다. 결과는 `git diff` 로 확인하고 커밋한다. 검증은 규칙 위반만 잡고, 요청대로 바뀌었는지는 사람이 확인해야 한다.
 
-준비물: [uv](https://docs.astral.sh/uv/) (파이썬 패키지는 자동 설치), 로그인된 [Claude Code](https://claude.com/claude-code) CLI (`make` 의 AI 단계), 6단계용 `brew install --cask prusaslicer` (없으면 6단계는 SKIP).
+준비물: [uv](https://docs.astral.sh/uv/) (파이썬 패키지는 자동 설치), 로그인된 [Claude Code](https://claude.com/claude-code) CLI (각자 계정으로 실행), 6단계용 `brew install --cask prusaslicer` (없으면 6단계는 SKIP).
 
 ## 검증 단계
 
@@ -58,19 +61,9 @@ AI 가 만든 코드는 이 PC 에서 그대로 실행된다. 결과는 `git dif
 | 6 슬라이서 | PrusaSlicer로 2단계 방향 그대로 슬라이스, 출력 시간과 필라멘트 양 | 슬라이스 성공 |
 | 7 실물 측정 | `measurements.csv` 의 캘리퍼 측정값과 설계값 비교 | 행마다 허용오차 |
 
-## 핵심 치수
+## 참고 엔진 (검증기 테스트용)
 
-| 항목 | 값 |
-|---|---|
-| 보어 / 피스톤 | 20.5 / 20.0 |
-| 행정 (크랭크 반경) | 24 (12) |
-| 커넥팅 로드 중심거리 | 40 (로드/반경 3.33) |
-| 실린더 간격 | 28 |
-| 크랭크핀 위상 | 0°, 180°, 180°, 0° (점화순서 1-3-4-2) |
-| 크랭크핀, 저널 | ⌀6, 웹 구멍 ⌀5.95 (압입), 로드와 베어링 구멍 ⌀6.4 |
-| 피스톤 핀 | ⌀4, 피스톤 구멍 ⌀3.95 (압입), 로드 구멍 ⌀4.4 |
-
-부품 37개: 블록, 커버(투명), 받침, 베어링 블록 2, 손잡이, 저널 5, 웹 8, 크랭크핀 4, 고정 칼라 2, 로드 4, 피스톤 4, 피스톤 핀 4. 결합 45곳. 크랭크축 축 방향 유격 최대 0.28. 못, 나사, 접착제 없이 핀과 압입으로만 조립한다.
+`tests/reference_engine.py` 는 검증기를 만들면서 쓴 엔진이다 (부품 38개, 플라이휠 포함). `make test` 가 이걸 일부러 망가뜨려 검증기가 잡는지 확인하는 데만 쓴다. 이 엔진의 프롬프트 기록은 `tests/reference_log.csv`.
 
 ## 다른 도구로 만든 부품을 검증하려면
 

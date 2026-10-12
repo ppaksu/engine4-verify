@@ -8,6 +8,12 @@
   - 바깥 칼라는 손잡이 면에, 안쪽 칼라는 웹 1A 면에 맞닿아 위치가 형상으로 정해진다.
   - 칼라-베어링 틈 0.08 x 2 = 0.16, 베어링 위치핀 여유 0.12 -> 받침 대비 최대 0.28.
   - 뒤 베어링은 칼라 없이 축 방향으로 자유(이중 구속 방지).
+
+플라이휠: 뒤 저널 끝에 압입. 손으로 돌릴 때 회전을 고르게 하고,
+  테두리 +Z 홈이 1번 실린더 상사점 표시다.
+  - 뒤 베어링 면과 1.0 떨어져 있어 축 방향 유격(최대 0.28) 안에서 닿지 않는다
+    (스러스트 면이 아니다).
+  - 지름 44 -> 아래 끝 z=-22, 받침 윗면(z=-28)과 6 여유.
 """
 import json
 import math
@@ -48,7 +54,11 @@ BASE_Z = (-31.0, -28.0)     # 받침 판
 POSTS = [(sx * 52.0, sy * 17.0) for sx in (-1, 1) for sy in (-1, 1)]
 BEARING_X = {"front": (-61.0, -55.0), "rear": (55.0, 61.0)}
 HANDLE_X = (-68.0, -65.0)
-REAR_END = 64.0
+
+FLY_X = (62.0, 67.0)        # 플라이휠 (뒤 베어링 면에서 1.0 떨어짐)
+FLY_D = 44.0                # 플라이휠 지름
+FLY_MARK = 2.0              # 상사점 표시 홈 폭/깊이
+REAR_END = FLY_X[1]         # 뒤 저널 끝 = 플라이휠 바깥면
 
 
 # ---- 도형 도우미 ----
@@ -140,6 +150,14 @@ def collar(x0, x1):
     return xcyl(x0, x1, 0, 0, COLLAR_D).cut(xcyl(x0, x1, 0, 0, PRESS))
 
 
+def flywheel(x0, x1):
+    """뒤 저널에 압입하는 플라이휠. 테두리 +Z 홈 = 1번 상사점 표시."""
+    disk = xcyl(x0, x1, 0, 0, FLY_D).cut(xcyl(x0, x1, 0, 0, PRESS))
+    top = FLY_D / 2
+    mark = box(x0, x1, -FLY_MARK / 2, FLY_MARK / 2, top - FLY_MARK, top + 1.0)
+    return disk.cut(mark)
+
+
 def build():
     parts, fits = {}, []
 
@@ -159,7 +177,7 @@ def build():
     for x, y in POSTS:
         fit("base", "block", (x, y, 25.5), "z", "locating")
 
-    # 조립식 크랭크축: 웹 8, 크랭크핀 4, 저널 5, 손잡이 1, 고정 칼라 2
+    # 조립식 크랭크축: 웹 8, 크랭크핀 4, 저널 5, 손잡이 1, 고정 칼라 2, 플라이휠 1
     add("handle", handle(), motion="crank")
     journal_x = [(HANDLE_X[0], XS[0] - GAP / 2)]
     journal_x += [(XS[i] + GAP / 2, XS[i + 1] - GAP / 2) for i in range(3)]
@@ -169,6 +187,10 @@ def build():
     fit("journal_0", "handle", (sum(HANDLE_X) / 2, 0, 0), "x", "press")
     fit("journal_0", "bearing_front", (sum(BEARING_X["front"]) / 2, 0, 0), "x", "running")
     fit("journal_4", "bearing_rear", (sum(BEARING_X["rear"]) / 2, 0, 0), "x", "running")
+
+    # 뒤 저널 끝 플라이휠 (스러스트 면 아님: 뒤 베어링과 1.0 틈)
+    add("flywheel", flywheel(*FLY_X), motion="crank")
+    fit("journal_4", "flywheel", (sum(FLY_X) / 2, 0, 0), "x", "press")
 
     # 앞 베어링 양옆 고정 칼라: 손잡이 면 / 웹 1A 면에 맞닿게 길이를 정함
     fx0, fx1 = BEARING_X["front"]
@@ -200,7 +222,8 @@ def build():
             j = i - 1 if w == "A" else i
             fit(f"journal_{j}", f"web_{i}{w}", (xw + WEB_T / 2, 0, 0), "x", "press")
         fit(f"pistonpin_{i}", f"rod_{i}", (x, 0, zs), "x", "running")
-        fit(f"pistonpin_{i}", f"piston_{i}", (x + 9, 0, zs), "x", "press")
+        for sx in (-1, 1):
+            fit(f"pistonpin_{i}", f"piston_{i}", (x + sx * 9, 0, zs), "x", "press")
         fit(f"piston_{i}", "block", (x, 0, zs + 5), "z", "sliding")
 
     return parts, fits, {"r": R, "L": L, "cylinders": cylinders}

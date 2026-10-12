@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 
 import matplotlib
+import numpy as np
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import trimesh  # noqa: E402
@@ -35,6 +36,13 @@ def load(skip=("cover",)):
     return asm, meshes
 
 
+def limits(meshes):
+    """전체 부품 범위 + 움직임 여유 10mm."""
+    lo = np.min([m.bounds[0] for m, _ in meshes.values()], axis=0) - 10
+    hi = np.max([m.bounds[1] for m, _ in meshes.values()], axis=0) + 10
+    return lo, hi
+
+
 def draw(ax, asm, meshes, theta):
     ax.cla()
     T = poses(asm["kinematics"], theta)
@@ -42,8 +50,9 @@ def draw(ax, asm, meshes, theta):
         tri = trimesh.transform_points(m.vertices, T[motion])[m.faces]
         alpha = 0.2 if name == "block" else 0.95
         ax.add_collection3d(Poly3DCollection(tri, facecolor=color(name), edgecolor="none", alpha=alpha))
-    ax.set_xlim(-80, 70), ax.set_ylim(-50, 50), ax.set_zlim(-35, 70)
-    ax.set_box_aspect((150, 100, 105), zoom=1.3)
+    lo, hi = limits(meshes)
+    ax.set_xlim(lo[0], hi[0]), ax.set_ylim(lo[1], hi[1]), ax.set_zlim(lo[2], hi[2])
+    ax.set_box_aspect(hi - lo, zoom=1.3)
     ax.view_init(elev=18, azim=-60)
     ax.set_axis_off()
     ax.set_title(f"crank {math.degrees(theta):.0f} deg (firing order 1-3-4-2)")

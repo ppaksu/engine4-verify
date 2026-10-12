@@ -30,8 +30,8 @@ RANK = {"FAIL": 3, "WARN": 2, "PASS": 1, "SKIP": 0}
 
 
 class Ctx:
-    def __init__(self, parts_dir, rules_path):
-        self.dir = parts_dir
+    def __init__(self, parts_dir, rules_path, log_path):
+        self.dir, self.log = parts_dir, log_path
         self.rules = tomllib.loads(rules_path.read_text())
         self.asm = json.loads((parts_dir / "assembly.json").read_text())
         self.parts = {p["name"]: p for p in self.asm["parts"]}
@@ -60,8 +60,7 @@ def stage_files(ctx):
 
 
 def stage_prompts(ctx):
-    log = ROOT / "prompts" / "log.csv"
-    rows = read_csv(log)
+    rows = read_csv(ctx.log)
     if not rows:
         return [("FAIL", "prompts/log.csv", "프롬프트 기록 없음")]
     pats = [p.strip() for r in rows for p in r.get("부품", "").split(";") if p.strip()]
@@ -412,11 +411,14 @@ def main():
     ap = argparse.ArgumentParser(description="4기통 엔진 모형 검증")
     ap.add_argument("--parts", default=ROOT / "parts", type=Path)
     ap.add_argument("--rules", default=ROOT / "rules.toml", type=Path)
+    ap.add_argument("--log", default=ROOT / "prompts" / "log.csv", type=Path)
     ap.add_argument("--skip", default="", help="건너뛸 단계 번호, 예: 6,7")
     args = ap.parse_args()
     skip = set(args.skip.split(",")) - {""}
 
-    ctx = Ctx(args.parts, args.rules)
+    if not (args.parts / "assembly.json").exists():
+        sys.exit(f"{args.parts}/assembly.json 없음. 먼저 make 로 엔진을 만드세요.")
+    ctx = Ctx(args.parts, args.rules, args.log)
     results, t0 = [], time.time()
     for num, title, fn in STAGES:
         t = time.time()

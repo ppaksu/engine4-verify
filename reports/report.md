@@ -1,4 +1,4 @@
-# 검증 결과 (2026-10-12 13:42, 4초)
+# 검증 결과 (2026-10-12 14:06, 4초)
 
 | 단계 | 이름 | 결과 |
 |---|---|---|
@@ -37,6 +37,7 @@
 | PASS | journal_2 | stl + step |
 | PASS | journal_3 | stl + step |
 | PASS | journal_4 | stl + step |
+| PASS | flywheel | stl + step |
 | PASS | collar_front_out | stl + step |
 | PASS | collar_front_in | stl + step |
 | PASS | web_1A | stl + step |
@@ -68,7 +69,7 @@
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| PASS | prompts/log.csv | 시도 2회 (실패 0회) |
+| PASS | prompts/log.csv | 시도 3회 (실패 0회) |
 
 ## 1. 형상 규칙: PASS
 
@@ -84,7 +85,8 @@
 | PASS | journal_1 | 크기 23.4x6.0x6.0, 부피 661mm3, 두께 1%값 6.00 |
 | PASS | journal_2 | 크기 23.4x6.0x6.0, 부피 661mm3, 두께 1%값 6.00 |
 | PASS | journal_3 | 크기 23.4x6.0x6.0, 부피 661mm3, 두께 1%값 6.00 |
-| PASS | journal_4 | 크기 19.7x6.0x6.0, 부피 557mm3, 두께 1%값 6.00 |
+| PASS | journal_4 | 크기 22.7x6.0x6.0, 부피 642mm3, 두께 1%값 6.00 |
+| PASS | flywheel | 크기 5.0x44.0x44.0, 부피 7441mm3, 두께 1%값 5.00 |
 | PASS | collar_front_out | 크기 3.9x12.0x12.0, 부피 334mm3, 두께 1%값 3.03 |
 | PASS | collar_front_in | 크기 7.6x12.0x12.0, 부피 650mm3, 두께 1%값 3.03 |
 | PASS | web_1A | 크기 3.0x13.0x25.0, 부피 699mm3, 두께 1%값 3.00 |
@@ -127,6 +129,7 @@
 | PASS | journal_2 | -X 면을 바닥에, 오버행 0.0mm2 |
 | PASS | journal_3 | -X 면을 바닥에, 오버행 0.0mm2 |
 | PASS | journal_4 | -X 면을 바닥에, 오버행 0.0mm2 |
+| PASS | flywheel | -X 면을 바닥에, 오버행 0.0mm2 |
 | PASS | collar_front_out | -X 면을 바닥에, 오버행 0.0mm2 |
 | PASS | collar_front_in | -X 면을 바닥에, 오버행 0.0mm2 |
 | PASS | web_1A | -X 면을 바닥에, 오버행 0.0mm2 |
@@ -169,6 +172,7 @@
 | PASS | journal_0 / handle | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | journal_0 / bearing_front | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | journal_4 / bearing_rear | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
+| PASS | journal_4 / flywheel | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | journal_0 / collar_front_out | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | journal_0 / collar_front_in | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | crankpin_1 / rod_1 | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
@@ -178,6 +182,7 @@
 | PASS | journal_1 / web_1B | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | pistonpin_1 / rod_1 | running: 핀 4.00 / 구멍 4.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | pistonpin_1 / piston_1 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
+| PASS | pistonpin_1 / piston_1 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | piston_1 / block | sliding: 핀 20.00 / 구멍 20.50 / 차이 +0.50 (허용 +0.30~+0.70) |
 | PASS | crankpin_2 / rod_2 | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | crankpin_2 / web_2A | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
@@ -185,6 +190,7 @@
 | PASS | crankpin_2 / web_2B | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | journal_2 / web_2B | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | pistonpin_2 / rod_2 | running: 핀 4.00 / 구멍 4.40 / 차이 +0.40 (허용 +0.20~+0.50) |
+| PASS | pistonpin_2 / piston_2 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | pistonpin_2 / piston_2 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | piston_2 / block | sliding: 핀 20.00 / 구멍 20.50 / 차이 +0.50 (허용 +0.30~+0.70) |
 | PASS | crankpin_3 / rod_3 | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
@@ -194,6 +200,7 @@
 | PASS | journal_3 / web_3B | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | pistonpin_3 / rod_3 | running: 핀 4.00 / 구멍 4.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | pistonpin_3 / piston_3 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
+| PASS | pistonpin_3 / piston_3 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | piston_3 / block | sliding: 핀 20.00 / 구멍 20.50 / 차이 +0.50 (허용 +0.30~+0.70) |
 | PASS | crankpin_4 / rod_4 | running: 핀 6.00 / 구멍 6.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | crankpin_4 / web_4A | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
@@ -202,13 +209,14 @@
 | PASS | journal_4 / web_4B | press: 핀 6.00 / 구멍 5.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | pistonpin_4 / rod_4 | running: 핀 4.00 / 구멍 4.40 / 차이 +0.40 (허용 +0.20~+0.50) |
 | PASS | pistonpin_4 / piston_4 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
+| PASS | pistonpin_4 / piston_4 | press: 핀 4.00 / 구멍 3.95 / 차이 -0.05 (허용 -0.15~+0.00) |
 | PASS | piston_4 / block | sliding: 핀 20.00 / 구멍 20.50 / 차이 +0.50 (허용 +0.30~+0.70) |
 
 ## 4. 조립 간섭: PASS
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| PASS | 0도 조립 | 643쌍 겹침 없음 (압입 23쌍 제외) |
+| PASS | 0도 조립 | 679쌍 겹침 없음 (압입 24쌍 제외) |
 
 ## 5. 동작 검사: FAIL
 
