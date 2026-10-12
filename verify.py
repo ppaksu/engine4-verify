@@ -411,6 +411,7 @@ def main():
     ap = argparse.ArgumentParser(description="4기통 엔진 모형 검증")
     ap.add_argument("--parts", default=ROOT / "parts", type=Path)
     ap.add_argument("--rules", default=ROOT / "rules.toml", type=Path)
+    ap.add_argument("--reports", default=ROOT / "reports", type=Path)
     ap.add_argument("--log", default=ROOT / "prompts" / "log.csv", type=Path)
     ap.add_argument("--skip", default="", help="건너뛸 단계 번호, 예: 6,7")
     args = ap.parse_args()
@@ -432,14 +433,14 @@ def main():
                 print(f"         {s}  {item}: {msg}")
 
     analysis = analyze(results)
-    write_report(results, time.time() - t0, analysis)
+    write_report(results, time.time() - t0, analysis, args.reports)
     failed = any(s == "FAIL" for _, _, s, _ in results)
     print(f"\n==== 문제 분석 ====\n{analysis}")
     print(f"\n{'실패' if failed else '통과'} - reports/report.md")
     sys.exit(1 if failed else 0)
 
 
-def write_report(results, secs, analysis):
+def write_report(results, secs, analysis, out):
     lines = [f"# 검증 결과 ({time.strftime('%Y-%m-%d %H:%M')}, {secs:.0f}초)", "",
              "| 단계 | 이름 | 결과 |", "|---|---|---|"]
     lines += [f"| {n} | {t} | {s} |" for n, t, s, _ in results]
@@ -447,7 +448,6 @@ def write_report(results, secs, analysis):
     for n, t, s, rows in results:
         lines += ["", f"## {n}. {t}: {s}", "", "| 결과 | 대상 | 내용 |", "|---|---|---|"]
         lines += [f"| {st} | {item} | {msg} |" for st, item, msg, _ in rows]
-    out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     (out / "report.md").write_text("\n".join(lines) + "\n")
     (out / "analysis.txt").write_text(analysis + "\n")

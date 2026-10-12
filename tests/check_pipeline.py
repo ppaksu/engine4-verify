@@ -35,7 +35,7 @@ def run(label, mutate, expect_fail):
     with tempfile.TemporaryDirectory() as tmp:
         e.main(tmp)
         p = subprocess.run([sys.executable, str(ROOT / "verify.py"), "--parts", tmp, "--skip", "6,7",
-                            "--log", str(ROOT / "tests" / "reference_log.csv")],
+                            "--log", str(ROOT / "tests" / "reference_log.csv"), "--reports", tmp],
                            capture_output=True, text=True)
     vars(e).update(saved)
     failed = {ln.split("]")[1].strip().split(".")[0] for ln in p.stdout.splitlines() if ln.startswith("[FAIL]")}
