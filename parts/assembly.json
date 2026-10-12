@@ -1,0 +1,723 @@
+{
+  "kinematics": {
+    "r": 12.0,
+    "L": 40.0,
+    "cylinders": [
+      {
+        "id": 1,
+        "x": -42.0,
+        "phase": 0
+      },
+      {
+        "id": 2,
+        "x": -14.0,
+        "phase": 180
+      },
+      {
+        "id": 3,
+        "x": 14.0,
+        "phase": 180
+      },
+      {
+        "id": 4,
+        "x": 42.0,
+        "phase": 0
+      }
+    ]
+  },
+  "parts": [
+    {
+      "name": "block",
+      "type": "functional",
+      "motion": "fixed"
+    },
+    {
+      "name": "cover",
+      "type": "exterior",
+      "motion": "fixed"
+    },
+    {
+      "name": "base",
+      "type": "exterior",
+      "motion": "fixed"
+    },
+    {
+      "name": "bearing_front",
+      "type": "functional",
+      "motion": "fixed"
+    },
+    {
+      "name": "bearing_rear",
+      "type": "functional",
+      "motion": "fixed"
+    },
+    {
+      "name": "handle",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "journal_0",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "journal_1",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "journal_2",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "journal_3",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "journal_4",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "web_1A",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "web_1B",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "crankpin_1",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "rod_1",
+      "type": "functional",
+      "motion": "rod:1"
+    },
+    {
+      "name": "piston_1",
+      "type": "functional",
+      "motion": "piston:1"
+    },
+    {
+      "name": "pistonpin_1",
+      "type": "functional",
+      "motion": "piston:1"
+    },
+    {
+      "name": "web_2A",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "web_2B",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "crankpin_2",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "rod_2",
+      "type": "functional",
+      "motion": "rod:2"
+    },
+    {
+      "name": "piston_2",
+      "type": "functional",
+      "motion": "piston:2"
+    },
+    {
+      "name": "pistonpin_2",
+      "type": "functional",
+      "motion": "piston:2"
+    },
+    {
+      "name": "web_3A",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "web_3B",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "crankpin_3",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "rod_3",
+      "type": "functional",
+      "motion": "rod:3"
+    },
+    {
+      "name": "piston_3",
+      "type": "functional",
+      "motion": "piston:3"
+    },
+    {
+      "name": "pistonpin_3",
+      "type": "functional",
+      "motion": "piston:3"
+    },
+    {
+      "name": "web_4A",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "web_4B",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "crankpin_4",
+      "type": "functional",
+      "motion": "crank"
+    },
+    {
+      "name": "rod_4",
+      "type": "functional",
+      "motion": "rod:4"
+    },
+    {
+      "name": "piston_4",
+      "type": "functional",
+      "motion": "piston:4"
+    },
+    {
+      "name": "pistonpin_4",
+      "type": "functional",
+      "motion": "piston:4"
+    }
+  ],
+  "fits": [
+    {
+      "name": "bearing_front / base",
+      "pin": "bearing_front",
+      "hole": "base",
+      "at": [
+        -58.0,
+        -6,
+        -29.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "bearing_front / base",
+      "pin": "bearing_front",
+      "hole": "base",
+      "at": [
+        -58.0,
+        6,
+        -29.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "bearing_rear / base",
+      "pin": "bearing_rear",
+      "hole": "base",
+      "at": [
+        58.0,
+        -6,
+        -29.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "bearing_rear / base",
+      "pin": "bearing_rear",
+      "hole": "base",
+      "at": [
+        58.0,
+        6,
+        -29.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "base / block",
+      "pin": "base",
+      "hole": "block",
+      "at": [
+        -52.0,
+        -17.0,
+        25.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "base / block",
+      "pin": "base",
+      "hole": "block",
+      "at": [
+        -52.0,
+        17.0,
+        25.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "base / block",
+      "pin": "base",
+      "hole": "block",
+      "at": [
+        52.0,
+        -17.0,
+        25.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "base / block",
+      "pin": "base",
+      "hole": "block",
+      "at": [
+        52.0,
+        17.0,
+        25.5
+      ],
+      "axis": "z",
+      "kind": "locating"
+    },
+    {
+      "name": "journal_0 / handle",
+      "pin": "journal_0",
+      "hole": "handle",
+      "at": [
+        -66.5,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_0 / bearing_front",
+      "pin": "journal_0",
+      "hole": "bearing_front",
+      "at": [
+        -58.0,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "journal_4 / bearing_rear",
+      "pin": "journal_4",
+      "hole": "bearing_rear",
+      "at": [
+        58.0,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "crankpin_1 / rod_1",
+      "pin": "crankpin_1",
+      "hole": "rod_1",
+      "at": [
+        -42.0,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "crankpin_1 / web_1A",
+      "pin": "crankpin_1",
+      "hole": "web_1A",
+      "at": [
+        -45.8,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_0 / web_1A",
+      "pin": "journal_0",
+      "hole": "web_1A",
+      "at": [
+        -45.8,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "crankpin_1 / web_1B",
+      "pin": "crankpin_1",
+      "hole": "web_1B",
+      "at": [
+        -38.2,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_1 / web_1B",
+      "pin": "journal_1",
+      "hole": "web_1B",
+      "at": [
+        -38.2,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "pistonpin_1 / rod_1",
+      "pin": "pistonpin_1",
+      "hole": "rod_1",
+      "at": [
+        -42.0,
+        0,
+        52.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "pistonpin_1 / piston_1",
+      "pin": "pistonpin_1",
+      "hole": "piston_1",
+      "at": [
+        -33.0,
+        0,
+        52.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "piston_1 / block",
+      "pin": "piston_1",
+      "hole": "block",
+      "at": [
+        -42.0,
+        0,
+        57.0
+      ],
+      "axis": "z",
+      "kind": "sliding"
+    },
+    {
+      "name": "crankpin_2 / rod_2",
+      "pin": "crankpin_2",
+      "hole": "rod_2",
+      "at": [
+        -14.0,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "crankpin_2 / web_2A",
+      "pin": "crankpin_2",
+      "hole": "web_2A",
+      "at": [
+        -17.8,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_1 / web_2A",
+      "pin": "journal_1",
+      "hole": "web_2A",
+      "at": [
+        -17.8,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "crankpin_2 / web_2B",
+      "pin": "crankpin_2",
+      "hole": "web_2B",
+      "at": [
+        -10.2,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_2 / web_2B",
+      "pin": "journal_2",
+      "hole": "web_2B",
+      "at": [
+        -10.2,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "pistonpin_2 / rod_2",
+      "pin": "pistonpin_2",
+      "hole": "rod_2",
+      "at": [
+        -14.0,
+        0,
+        28.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "pistonpin_2 / piston_2",
+      "pin": "pistonpin_2",
+      "hole": "piston_2",
+      "at": [
+        -5.0,
+        0,
+        28.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "piston_2 / block",
+      "pin": "piston_2",
+      "hole": "block",
+      "at": [
+        -14.0,
+        0,
+        33.0
+      ],
+      "axis": "z",
+      "kind": "sliding"
+    },
+    {
+      "name": "crankpin_3 / rod_3",
+      "pin": "crankpin_3",
+      "hole": "rod_3",
+      "at": [
+        14.0,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "crankpin_3 / web_3A",
+      "pin": "crankpin_3",
+      "hole": "web_3A",
+      "at": [
+        10.2,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_2 / web_3A",
+      "pin": "journal_2",
+      "hole": "web_3A",
+      "at": [
+        10.2,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "crankpin_3 / web_3B",
+      "pin": "crankpin_3",
+      "hole": "web_3B",
+      "at": [
+        17.8,
+        -1.4695761589768238e-15,
+        -12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_3 / web_3B",
+      "pin": "journal_3",
+      "hole": "web_3B",
+      "at": [
+        17.8,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "pistonpin_3 / rod_3",
+      "pin": "pistonpin_3",
+      "hole": "rod_3",
+      "at": [
+        14.0,
+        0,
+        28.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "pistonpin_3 / piston_3",
+      "pin": "pistonpin_3",
+      "hole": "piston_3",
+      "at": [
+        23.0,
+        0,
+        28.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "piston_3 / block",
+      "pin": "piston_3",
+      "hole": "block",
+      "at": [
+        14.0,
+        0,
+        33.0
+      ],
+      "axis": "z",
+      "kind": "sliding"
+    },
+    {
+      "name": "crankpin_4 / rod_4",
+      "pin": "crankpin_4",
+      "hole": "rod_4",
+      "at": [
+        42.0,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "crankpin_4 / web_4A",
+      "pin": "crankpin_4",
+      "hole": "web_4A",
+      "at": [
+        38.2,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_3 / web_4A",
+      "pin": "journal_3",
+      "hole": "web_4A",
+      "at": [
+        38.2,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "crankpin_4 / web_4B",
+      "pin": "crankpin_4",
+      "hole": "web_4B",
+      "at": [
+        45.8,
+        -0.0,
+        12.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "journal_4 / web_4B",
+      "pin": "journal_4",
+      "hole": "web_4B",
+      "at": [
+        45.8,
+        0,
+        0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "pistonpin_4 / rod_4",
+      "pin": "pistonpin_4",
+      "hole": "rod_4",
+      "at": [
+        42.0,
+        0,
+        52.0
+      ],
+      "axis": "x",
+      "kind": "running"
+    },
+    {
+      "name": "pistonpin_4 / piston_4",
+      "pin": "pistonpin_4",
+      "hole": "piston_4",
+      "at": [
+        51.0,
+        0,
+        52.0
+      ],
+      "axis": "x",
+      "kind": "press"
+    },
+    {
+      "name": "piston_4 / block",
+      "pin": "piston_4",
+      "hole": "block",
+      "at": [
+        42.0,
+        0,
+        57.0
+      ],
+      "axis": "z",
+      "kind": "sliding"
+    }
+  ]
+}

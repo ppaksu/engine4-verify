@@ -1,0 +1,33 @@
+# 과제 "모든 팀이 지켜야 할 조건"을 숫자로 옮긴 것. 단위 mm.
+
+[size]
+max_part = 200            # 부품 하나는 200x200x200 안
+
+[wall]
+min = 1.6                 # 벽 두께
+min_decor = 1.2           # assembly.json 에서 "decor": true 인 부품
+samples = 3000            # 부품마다 두께를 재는 표면 점 수
+thin_fraction_max = 0.01  # 얇은 점이 이 비율을 넘으면 실패
+
+[overhang]
+max_angle = 45            # 수직에서 45도 넘게 기운 아랫면 = 오버행
+ignore_area = 20          # 이 면적(mm2) 이하는 작은 수평 구멍 브리지로 보고 통과
+
+[fit]
+min_pin_d = 3.0           # 지름 3mm 미만 핀 금지
+
+# 구멍 지름 - 핀 지름 (mm) 허용 범위
+[fit.kinds]
+running = [0.2, 0.5]      # 돌아가는 곳
+sliding = [0.3, 0.7]      # 피스톤과 실린더
+press = [-0.15, 0.0]      # 끼워서 고정 (압입)
+locating = [0.1, 0.3]     # 위치 맞춤 핀
+
+[motion]
+step_deg = 5              # 크랭크 회전 검사 간격
+interference_tol = 0.5    # 이 부피(mm3) 이하 겹침은 맞닿은 면으로 봄
+min_rod_ratio = 3.0       # 로드 길이 / 크랭크 반경
+
+[slicer]
+path = ""                 # 비우면 PrusaSlicer 자동 탐색
+density = 1.24            # 필라멘트 밀도 g/cm3 (PLA)
