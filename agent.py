@@ -35,7 +35,8 @@ OUT = Path(__file__).resolve().parent.parent / "parts"
 def build():
     # parts: {이름: (cq.Workplane, {"name": 이름, "type": "functional" 또는 "exterior", "motion": ...})}
     # fits:  [{"name": "핀 / 구멍", "pin": 핀 부품, "hole": 구멍 부품, "at": [x, y, z], "axis": "x", "kind": "running"}]
-    # kin:   {"r": 크랭크 반경, "L": 로드 중심거리, "cylinders": [{"id": 1, "x": 실린더 x, "phase": 0}, ...]}
+    # kin:   {"r": 크랭크 반경, "L": 로드 중심거리, "cylinders": [{"id": 1, "x": 실린더 x, "phase": 0}, ...],
+    #         "firing_order": [1, 3, 4, 2]}  (점화 순서, 그림에 쓰임)
     return parts, fits, kin
 
 def main(out=OUT):

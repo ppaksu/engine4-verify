@@ -27,7 +27,8 @@ OUT = Path(__file__).resolve().parent.parent / "parts"
 R = 12.0                    # 크랭크 반경, 행정 24
 L = 40.0                    # 커넥팅 로드 중심거리
 PITCH = 28.0                # 실린더 간격
-PHASES = [0, 180, 180, 0]   # 크랭크핀 위상, 점화순서 1-3-4-2
+PHASES = [0, 180, 90, 270]  # 크로스플레인: 피스톤 4개가 따로 움직임
+FIRING_ORDER = [1, 3, 4, 2]  # 폭발 간격 270-180-90-180
 XS = [PITCH * (i - 1.5) for i in range(4)]   # -42 -14 14 42
 
 SHAFT = 6.0                 # 크랭크핀, 저널 지름
@@ -90,14 +91,20 @@ def web(x0, phase):
     return body.cut(xcyl(x0, x0 + WEB_T, 0, 0, PRESS)).cut(xcyl(x0, x0 + WEB_T, y, z, PRESS))
 
 
+def small_end_z(y, z):
+    """크랭크핀 (y, z) 일 때 피스톤 핀 높이."""
+    return z + math.sqrt(L * L - y * y)
+
+
 def rod(x, phase):
+    """큰쪽 원점, 작은쪽 +Z 로 세워 만든 뒤 0도 자세로 기울여 크랭크핀에 놓는다."""
     y, zb = pin_yz(phase)
-    assert abs(y) < 1e-9, "0도에서 로드가 수직인 위상만 지원"
-    zs = zb + L
     x0, x1 = x - ROD_T / 2, x + ROD_T / 2
-    body = (xcyl(x0, x1, 0, zb, 11.0).union(xcyl(x0, x1, 0, zs, 8.5))
-            .union(box(x0, x1, -2.25, 2.25, zb, zs)))
-    return body.cut(xcyl(x0, x1, 0, zb, SHAFT + RUN)).cut(xcyl(x0, x1, 0, zs, PIN + RUN))
+    body = (xcyl(x0, x1, 0, 0, 11.0).union(xcyl(x0, x1, 0, L, 8.5))
+            .union(box(x0, x1, -2.25, 2.25, 0, L)))
+    body = body.cut(xcyl(x0, x1, 0, 0, SHAFT + RUN)).cut(xcyl(x0, x1, 0, L, PIN + RUN))
+    tilt = math.degrees(math.asin(y / L))
+    return body.rotate((0, 0, 0), (1, 0, 0), tilt).translate((0, y, zb))
 
 
 def piston(x, zs):
@@ -206,7 +213,7 @@ def build():
     cylinders = []
     for i, (x, ph) in enumerate(zip(XS, PHASES), start=1):
         y, z = pin_yz(ph)
-        zs = z + L
+        zs = small_end_z(y, z)
         cylinders.append({"id": i, "x": x, "phase": ph})
         xa, xb = x - GAP / 2 - WEB_T, x + GAP / 2      # 웹 A, B 시작 x
         add(f"web_{i}A", web(xa, ph), motion="crank")
@@ -226,7 +233,7 @@ def build():
             fit(f"pistonpin_{i}", f"piston_{i}", (x + sx * 9, 0, zs), "x", "press")
         fit(f"piston_{i}", "block", (x, 0, zs + 5), "z", "sliding")
 
-    return parts, fits, {"r": R, "L": L, "cylinders": cylinders}
+    return parts, fits, {"r": R, "L": L, "cylinders": cylinders, "firing_order": FIRING_ORDER}
 
 
 def main(out=OUT):

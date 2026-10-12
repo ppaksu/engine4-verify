@@ -50,19 +50,22 @@ def limits(meshes):
 
 
 def fire_angles(kin):
-    """폭발 순서대로 720/n 도마다 점화. 각 실린더의 상사점과 맞는지 확인."""
+    """폭발 순서대로, 각 실린더가 다음으로 상사점(theta + phase = 0 mod 360)에 오는 각도에 점화."""
     order = kin.get("firing_order", [1, 3, 4, 2])
     phase = {c["id"]: c["phase"] for c in kin["cylinders"]}
-    angles = {cyl: 720 * k / len(order) for k, cyl in enumerate(order)}
-    for cyl, a in angles.items():   # 상사점: theta + phase = 0 (mod 360)
-        if (a + phase[cyl]) % 360:
-            print(f"경고: {cyl}번 점화 {a:.0f}도가 상사점과 안 맞음 (위상 {phase[cyl]})")
+    angles, last = {}, None
+    for cyl in order:
+        tdc = -phase[cyl] % 360
+        a = tdc if last is None else last + (tdc - last) % 360 or last + 360
+        angles[cyl], last = a, a
+    if last - angles[order[0]] >= 720:
+        print(f"경고: 점화 순서 {order} 가 크랭크 2회전 안에 안 들어감")
     return angles
 
 
 def firing(angles, deg):
-    """지금 폭발 행정(점화 후 180도) 중인 실린더."""
-    return next((c for c, a in angles.items() if 0 <= (deg - a) % 720 < 180), None)
+    """지금 폭발 행정(점화 후 180도) 중인 실린더들. 간격이 고르지 않으면 0개나 2개일 수 있다."""
+    return [c for c, a in angles.items() if (deg - a) % 720 < 180]
 
 
 def draw(ax, asm, meshes, theta):
@@ -75,7 +78,7 @@ def draw(ax, asm, meshes, theta):
     for name, (m, motion) in meshes.items():
         tris.append(trimesh.transform_points(m.vertices, T[motion])[m.faces])
         shade = 0.45 + 0.55 * np.clip((m.face_normals @ T[motion][:3, :3].T) @ LIGHT, 0, 1)
-        base = FIRE if motion == f"piston:{hot}" else color(name)
+        base = FIRE if motion in {f"piston:{c}" for c in hot} else color(name)
         rgba = np.tile([*to_rgb(base), 0.18 if name == "block" else 1.0], (len(m.faces), 1))
         rgba[:, :3] *= shade[:, None]
         cols.append(rgba)
@@ -87,7 +90,8 @@ def draw(ax, asm, meshes, theta):
     ax.view_init(elev=18, azim=-60)
     ax.set_axis_off()
     order = "-".join(map(str, kin.get("firing_order", [1, 3, 4, 2])))
-    ax.set_title(f"crank {deg:.0f} deg   power stroke: cylinder {hot}   (firing order {order})", fontsize=13)
+    now = ", ".join(map(str, hot)) or "none"
+    ax.set_title(f"crank {deg:.0f} deg   power stroke: {now}   (firing order {order})", fontsize=13)
 
 
 def main():
