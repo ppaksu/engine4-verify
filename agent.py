@@ -63,10 +63,11 @@ def build_and_verify():
     return code == 0, out
 
 
-def failures(verify_out):
-    """재요청에 붙일 실패/경고 줄만."""
-    lines = [ln.strip() for ln in verify_out.splitlines() if re.match(r"\s+(FAIL|WARN)\s", ln) or "생성 실패" in ln]
-    return "\n".join(lines) or verify_out.strip()[-2000:]
+def analysis(verify_out):
+    """verify.py 의 문제 분석 (생성 단계에서 죽었으면 오류 끝부분)."""
+    if "==== 문제 분석 ====" in verify_out:
+        return verify_out.split("==== 문제 분석 ====")[1].rsplit("\n\n", 1)[0].strip()
+    return verify_out.strip()[-1500:]
 
 
 def log(prompt, ok, summary, attempt_file):
@@ -93,11 +94,12 @@ def main():
     original = ENGINE.read_text()
     ATTEMPTS.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y%m%d-%H%M%S")
-    feedback = ""
+    feedback, first = "", None
     for n in range(1, MAX_TRIES + 1):
         print(f"\n[{n}/{MAX_TRIES}] Claude 가 코드를 고치는 중...")
         prompt = (f"현재 engine/make_engine.py:\n```python\n{ENGINE.read_text()}\n```\n\n요청: {request}\n"
-                  + (f"\n직전 시도가 검증에 실패했다. 아래 문제를 고쳐라:\n{feedback}\n" if feedback else ""))
+                  + (f"\n직전 시도가 검증에 실패했다. 아래 분석(측정값, 기준, 위치, 고칠 점)대로 고쳐라:\n{feedback}\n"
+                     if feedback else ""))
         try:
             reply = ask_claude(prompt)
         except (RuntimeError, subprocess.TimeoutExpired) as e:
@@ -108,23 +110,33 @@ def main():
         if not blocks:
             attempt_file.write_text(reply)
             feedback = "답에 ```python 코드 블록이 없었다. 파일 전체를 코드 블록 하나로 내라."
+            first = first or "코드 블록 없이 답함 (코드를 만들지 못함)"
             log(request if n == 1 else f"{request} (재시도 {n})", False, "코드 블록 없음", attempt_file)
             continue
         code = max(blocks, key=len)
         attempt_file.write_text(code)
         ENGINE.write_text(code)
         ok, out = build_and_verify()
-        feedback = failures(out)
+        feedback = analysis(out)
+        first = first or feedback
         summary = "검증 통과" if ok else feedback.splitlines()[0][:150]
         log(request if n == 1 else f"{request} (재시도 {n}, 직전 실패 내용 전달)", ok, summary, attempt_file)
         if ok:
             run(str(ROOT / "render.py"))
-            print(f"\n완료 ({n}회 시도). reports/report.md, reports/engine.gif")
+            report_first(request, first, f"{n}회차에서 통과. reports/report.md, reports/engine.gif")
             return
-    print(f"\n{MAX_TRIES}회 모두 실패. 원래 설계로 되돌림. 시도 코드는 prompts/attempts/ 에 있음.")
     ENGINE.write_text(original)
     build_and_verify()
+    report_first(request, first, f"{MAX_TRIES}회 모두 실패, 원래 설계로 되돌림. 시도 코드는 prompts/attempts/")
     sys.exit(1)
+
+
+def report_first(request, first, outcome):
+    """첫 프롬프트로 만든 결과의 분석을 마지막에 출력하고 reports/first_attempt.md 에 저장."""
+    text = (f"==== 첫 시도 분석 ====\n요청: {request}\n\n{first or '분석 없음 (Claude 호출 실패)'}\n\n"
+            f"결과: {outcome}")
+    print("\n" + text)
+    (ROOT / "reports" / "first_attempt.md").write_text(f"```\n{text}\n```\n")
 
 
 if __name__ == "__main__":

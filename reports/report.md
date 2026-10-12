@@ -1,16 +1,26 @@
-# 검증 결과 (2026-10-12 13:37, 8초)
+# 검증 결과 (2026-10-12 13:42, 4초)
 
 | 단계 | 이름 | 결과 |
 |---|---|---|
 | 0 | 파일 | PASS |
 | 0 | 프롬프트 기록 | PASS |
 | 1 | 형상 규칙 | PASS |
-| 2 | 출력성 | PASS |
+| 2 | 출력성 | WARN |
 | 3 | 결합 공차 | PASS |
 | 4 | 조립 간섭 | PASS |
-| 5 | 동작 검사 | PASS |
-| 6 | 슬라이서 | PASS |
+| 5 | 동작 검사 | FAIL |
+| 6 | 슬라이서 | SKIP |
 | 7 | 실물 측정 | SKIP |
+
+## 문제 분석
+
+```
+[2. 출력성] 1건
+  WARN block: +Z 면을 바닥에, 오버행 2188.6mm2, 서포트 위치를 support_note 로 적을 것. 출력 방향을 바꾸거나 45° 챔퍼를 넣는 방법도 있음
+[5. 동작 검사] 3건
+  FAIL block x rod_2: 크랭크 95°에서 처음 부딪힘, 최대 23.7mm3, 위치 약 (-14, 11, 11). 회전하는 부품이 지나가는 반경 안에 있는 형상을 줄이거나 옮길 것
+  FAIL block x web_2A, block x web_2B: 크랭크 110°에서 처음 부딪힘, 최대 33.9mm3, 위치 약 (-18, 12, 10). 회전하는 부품이 지나가는 반경 안에 있는 형상을 줄이거나 옮길 것 (위치는 첫 부품 기준)
+```
 
 ## 0. 파일: PASS
 
@@ -64,7 +74,7 @@
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| PASS | block | 크기 116.0x44.0x40.0, 부피 68178mm3, 두께 1%값 2.75 |
+| PASS | block | 크기 116.0x44.0x54.0, 부피 69942mm3, 두께 1%값 2.76 |
 | PASS | cover | 크기 114.6x30.6x43.0, 부피 33112mm3, 두께 1%값 2.00 |
 | PASS | base | 크기 128.0x50.0x58.0, 부피 24391mm3, 두께 1%값 3.00 |
 | PASS | bearing_front | 크기 6.0x20.0x39.0, 부피 4202mm3, 두께 1%값 4.00 |
@@ -102,11 +112,11 @@
 | PASS | piston_4 | 크기 20.0x20.0x16.0, 부피 2262mm3, 두께 1%값 2.00 |
 | PASS | pistonpin_4 | 크기 19.0x4.0x4.0, 부피 239mm3, 두께 1%값 4.00 |
 
-## 2. 출력성: PASS
+## 2. 출력성: WARN
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| PASS | block | -Z 면을 바닥에, 오버행 0.0mm2 |
+| WARN | block | +Z 면을 바닥에, 오버행 2188.6mm2, 서포트 위치를 support_note 로 적을 것 |
 | PASS | cover | +Z 면을 바닥에, 오버행 0.0mm2 |
 | PASS | base | -Z 면을 바닥에, 오버행 0.0mm2 |
 | PASS | bearing_front | -X 면을 바닥에, 오버행 19.1mm2 |
@@ -200,58 +210,23 @@
 |---|---|---|
 | PASS | 0도 조립 | 643쌍 겹침 없음 (압입 23쌍 제외) |
 
-## 5. 동작 검사: PASS
+## 5. 동작 검사: FAIL
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
 | PASS | 기구 치수 | 행정 24, 로드/반경 3.33 (기준 3.0 이상) |
-| PASS | 크랭크 1회전 | 5도 간격 72자세, 462쌍 겹침 없음 |
+| FAIL | block x rod_2 | 95도부터 충돌, 최대 23.7mm3 |
+| FAIL | block x web_2A | 110도부터 충돌, 최대 33.9mm3 |
+| FAIL | block x web_2B | 110도부터 충돌, 최대 33.9mm3 |
 
-## 6. 슬라이서: PASS
+## 6. 슬라이서: SKIP
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| PASS | block | 2h 47m 15s, 50.5g |
-| PASS | cover | 2h 22m 36s, 36.7g |
-| PASS | base | 2h 19m 30s, 23.9g |
-| PASS | bearing_front | 12m 45s, 3.1g |
-| PASS | bearing_rear | 12m 45s, 3.1g |
-| PASS | handle | 8m 36s, 1.5g |
-| PASS | journal_0 | 7m 1s, 0.9g |
-| PASS | journal_1 | 6m 56s, 0.9g |
-| PASS | journal_2 | 6m 56s, 0.9g |
-| PASS | journal_3 | 6m 56s, 0.9g |
-| PASS | journal_4 | 5m 52s, 0.7g |
-| PASS | collar_front_out | 3m 12s, 0.5g |
-| PASS | collar_front_in | 6m 12s, 0.8g |
-| PASS | web_1A | 4m 13s, 0.8g |
-| PASS | web_1B | 4m 13s, 0.8g |
-| PASS | crankpin_1 | 3m 8s, 0.4g |
-| PASS | rod_1 | 5m 16s, 1.1g |
-| PASS | piston_1 | 9m 54s, 2.6g |
-| PASS | pistonpin_1 | 3m 44s, 0.3g |
-| PASS | web_2A | 4m 14s, 0.8g |
-| PASS | web_2B | 4m 14s, 0.8g |
-| PASS | crankpin_2 | 3m 8s, 0.4g |
-| PASS | rod_2 | 5m 16s, 1.1g |
-| PASS | piston_2 | 9m 55s, 2.6g |
-| PASS | pistonpin_2 | 3m 44s, 0.3g |
-| PASS | web_3A | 4m 14s, 0.8g |
-| PASS | web_3B | 4m 14s, 0.8g |
-| PASS | crankpin_3 | 3m 8s, 0.4g |
-| PASS | rod_3 | 5m 17s, 1.1g |
-| PASS | piston_3 | 9m 55s, 2.6g |
-| PASS | pistonpin_3 | 3m 44s, 0.3g |
-| PASS | web_4A | 4m 13s, 0.8g |
-| PASS | web_4B | 4m 13s, 0.8g |
-| PASS | crankpin_4 | 3m 8s, 0.4g |
-| PASS | rod_4 | 5m 16s, 1.1g |
-| PASS | piston_4 | 9m 54s, 2.6g |
-| PASS | pistonpin_4 | 3m 44s, 0.3g |
-| PASS | 합계 | 10h 48m, 148g (프린터 1대 순차 출력 기준) |
+| SKIP | - | --skip |
 
 ## 7. 실물 측정: SKIP
 
 | 결과 | 대상 | 내용 |
 |---|---|---|
-| SKIP | measurements.csv | 측정값 없음. 출력 후 캘리퍼 값을 적으면 검사 |
+| SKIP | - | --skip |

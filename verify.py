@@ -74,6 +74,12 @@ def stage_prompts(ctx):
 
 
 # ---------- 1. 형상 규칙 ----------
+def pts_below(mesh, t, limit):
+    """얇은 점들의 중심 좌표 (같은 seed 라 thickness() 와 같은 점)."""
+    pts, _ = trimesh.sample.sample_surface(mesh, len(t), seed=0)
+    return pts[t < limit].mean(axis=0).round(1).tolist()
+
+
 def thickness(mesh, n):
     pts, fi = trimesh.sample.sample_surface(mesh, n, seed=0)
     nrm = mesh.face_normals[fi]
@@ -100,7 +106,9 @@ def stage_shape(ctx):
         thin = float(np.mean(t < min_wall))
         note = f"크기 {size}, 부피 {m.volume:.0f}mm3, 두께 1%값 {np.percentile(t, 1):.2f}"
         if thin > r["wall"]["thin_fraction_max"]:
-            out.append(("FAIL", name, f"{min_wall}mm 미만 표면 {thin:.1%} ({note})"))
+            thin_pts = pts_below(m, t, min_wall)
+            out.append(("FAIL", name, f"{min_wall}mm 미만 표면 {thin:.1%} ({note})",
+                        {"min_wall": min_wall, "thin": thin, "p1": float(np.percentile(t, 1)), "at": thin_pts}))
         elif m.body_count > 1:
             out.append(("WARN", name, f"덩어리 {m.body_count}개 ({note})"))
         else:
@@ -172,12 +180,13 @@ def stage_fits(ctx):
             continue
         c = hd - pd
         msg = f"{kind}: 핀 {pd:.2f} / 구멍 {hd:.2f} / 차이 {c:+.2f} (허용 {lo:+.2f}~{hi:+.2f})"
+        data = {"pin": pd, "hole": hd, "c": c, "lo": lo, "hi": hi, "kind": kind, "min_pin": r["min_pin_d"]}
         if pd < r["min_pin_d"]:
-            out.append(("FAIL", f["name"], f"핀 지름 {r['min_pin_d']}mm 미만. {msg}"))
+            out.append(("FAIL", f["name"], f"핀 지름 {r['min_pin_d']}mm 미만. {msg}", data))
         elif lo - 0.005 <= c <= hi + 0.005:
             out.append(("PASS", f["name"], msg))
         else:
-            out.append(("FAIL", f["name"], msg))
+            out.append(("FAIL", f["name"], msg, data))
     return out
 
 
@@ -227,9 +236,11 @@ def collisions(ctx, solids, groups, theta, pairs):
     hits = []
     for a, b in pairs:
         if overlap(boxes[a], boxes[b]):
-            v = (placed[a] ^ placed[b]).volume()
+            inter = placed[a] ^ placed[b]
+            v = inter.volume()
             if v > ctx.rules["motion"]["interference_tol"]:
-                hits.append((a, b, v))
+                bb = np.array(inter.bounding_box())
+                hits.append((a, b, v, ((bb[:3] + bb[3:]) / 2).round(1).tolist()))
     return hits
 
 
@@ -242,7 +253,7 @@ def stage_assembly(ctx):
     hits = collisions(ctx, solids, groups, 0.0, pairs)
     if not hits:
         return [("PASS", "0도 조립", f"{len(pairs)}쌍 겹침 없음 (압입 {len(allowed)}쌍 제외)")]
-    return [("FAIL", f"{a} x {b}", f"0도에서 {v:.1f}mm3 겹침") for a, b, v in hits]
+    return [("FAIL", f"{a} x {b}", f"0도에서 {v:.1f}mm3 겹침", {"vol": v, "at": at}) for a, b, v, at in hits]
 
 
 def stage_motion(ctx):
@@ -254,13 +265,13 @@ def stage_motion(ctx):
     pairs = [p for p in combinations(sorted(ctx.solids), 2) if ctx.groups[p[0]] != ctx.groups[p[1]]]
     worst = {}
     for deg in range(r["step_deg"], 360, r["step_deg"]):
-        for a, b, v in collisions(ctx, ctx.solids, ctx.groups, math.radians(deg), pairs):
-            first, vmax = worst.get((a, b), (deg, 0))
-            worst[(a, b)] = (first, max(vmax, v))
+        for a, b, v, at in collisions(ctx, ctx.solids, ctx.groups, math.radians(deg), pairs):
+            first, vmax, at0 = worst.get((a, b), (deg, 0, at))
+            worst[(a, b)] = (first, max(vmax, v), at0)
     if not worst:
         out.append(("PASS", "크랭크 1회전", f"{r['step_deg']}도 간격 {360 // r['step_deg']}자세, {len(pairs)}쌍 겹침 없음"))
-    for (a, b), (deg, v) in sorted(worst.items(), key=lambda kv: kv[1][0]):
-        out.append(("FAIL", f"{a} x {b}", f"{deg}도부터 충돌, 최대 {v:.1f}mm3"))
+    for (a, b), (deg, v, at) in sorted(worst.items(), key=lambda kv: kv[1][0]):
+        out.append(("FAIL", f"{a} x {b}", f"{deg}도부터 충돌, 최대 {v:.1f}mm3", {"deg": deg, "vol": v, "at": at}))
     return out
 
 
@@ -346,6 +357,57 @@ STAGES = [
 ]
 
 
+# ---------- 문제 분석 ----------
+def xyz(at):
+    return "(" + ", ".join(str(int(round(v))) for v in at) + ")"
+
+
+def explain(num, msg, d):
+    """실패/경고 한 줄을 '무엇이 기준을 어겼고, 어디를, 어떻게 고칠지'로."""
+    if num == "1" and "thin" in d:
+        return (f"벽이 {d['min_wall']}mm 보다 얇은 곳이 표면의 {d['thin']:.1%}, 가장 얇은 1% 지점 {d['p1']:.2f}mm, "
+                f"위치 약 {xyz(d['at'])}. 그 부근 벽이나 구멍 둘레를 {d['min_wall']}mm 이상으로 키울 것")
+    if num == "3" and "c" in d:
+        if d["pin"] < d["min_pin"]:
+            return f"핀 ⌀{d['pin']:.2f} 가 최소 ⌀{d['min_pin']} 보다 가늘다. 핀과 구멍을 함께 키울 것"
+        target = (d["lo"] + d["hi"]) / 2
+        word = "빡빡함" if d["c"] < d["lo"] else "헐거움"
+        return (f"{d['kind']} 차이 {d['c']:+.2f} 가 기준 {d['lo']:+.2f}~{d['hi']:+.2f} 밖({word}). "
+                f"핀 ⌀{d['pin']:.2f} 그대로면 구멍을 ⌀{d['hole']:.2f} → ⌀{d['pin'] + target:.2f} 로 바꿀 것")
+    if num == "3":
+        return msg + ". fits 의 at/axis 가 실제 핀과 구멍 위치와 다르거나, 구멍이 없음"
+    if num == "4" and "at" in d:
+        return (f"조립 상태(0°)에서 {d['vol']:.1f}mm3 겹침, 위치 약 {xyz(d['at'])}. "
+                "두 부품 사이를 0.3mm 이상 띄우거나, 끼워 맞춤이면 fits 에 press 로 등록")
+    if num == "5" and "deg" in d:
+        return (f"크랭크 {d['deg']}°에서 처음 부딪힘, 최대 {d['vol']:.1f}mm3, 위치 약 {xyz(d['at'])}. "
+                "회전하는 부품이 지나가는 반경 안에 있는 형상을 줄이거나 옮길 것")
+    hints = {"0": "내보내기 코드와 prompts/log.csv 확인", "1": "부품을 나누거나 형상을 정리할 것",
+             "2": "출력 방향을 바꾸거나 45° 챔퍼를 넣는 방법도 있음",
+             "5": "로드를 길게 하거나 크랭크 반경을 줄일 것", "6": "슬라이서 오류 메시지 확인",
+             "7": "프린터 보정(수축)을 하거나 설계값을 조정할 것"}
+    return f"{msg}. {hints.get(num, '')}"
+
+
+def analyze(results, limit=6):
+    lines = []
+    for num, title, _, rows in results:
+        bad = [r for r in rows if r[0] in ("FAIL", "WARN")]
+        if not bad:
+            continue
+        lines.append(f"[{num}. {title}] {len(bad)}건")
+        groups = {}   # 위치만 다른 같은 문제는 한 줄로
+        for s, item, msg, d in bad:
+            text = explain(num, msg, d)
+            groups.setdefault((s, re.sub(r"위치 약 \([^)]*\)", "", text)), [text, []])[1].append(item)
+        for (s, _), (text, items) in list(groups.items())[:limit]:
+            names = ", ".join(items) if len(items) <= 4 else f"{', '.join(items[:3])} 외 {len(items) - 3}개"
+            lines.append(f"  {s} {names}: {text}" + (" (위치는 첫 부품 기준)" if len(items) > 1 and "위치 약" in text else ""))
+        if len(groups) > limit:
+            lines.append(f"  ... 외 {len(groups) - limit}종 (reports/report.md)")
+    return "\n".join(lines) or "모든 기준 통과"
+
+
 def main():
     ap = argparse.ArgumentParser(description="4기통 엔진 모형 검증")
     ap.add_argument("--parts", default=ROOT / "parts", type=Path)
@@ -359,28 +421,34 @@ def main():
     for num, title, fn in STAGES:
         t = time.time()
         rows = [("SKIP", "-", "--skip")] if num in skip else fn(ctx)
-        status = max((s for s, _, _ in rows), key=RANK.get)
+        rows = [(*r, {}) if len(r) == 3 else r for r in rows]
+        status = max((r[0] for r in rows), key=RANK.get)
         results.append((num, title, status, rows))
         print(f"[{status:4}] {num}. {title} ({time.time() - t:.1f}s)")
-        for s, item, msg in rows:
+        for s, item, msg, _ in rows:
             if s in ("FAIL", "WARN"):
                 print(f"         {s}  {item}: {msg}")
 
-    write_report(results, time.time() - t0)
+    analysis = analyze(results)
+    write_report(results, time.time() - t0, analysis)
     failed = any(s == "FAIL" for _, _, s, _ in results)
+    print(f"\n==== 문제 분석 ====\n{analysis}")
     print(f"\n{'실패' if failed else '통과'} - reports/report.md")
     sys.exit(1 if failed else 0)
 
 
-def write_report(results, secs):
+def write_report(results, secs, analysis):
     lines = [f"# 검증 결과 ({time.strftime('%Y-%m-%d %H:%M')}, {secs:.0f}초)", "",
              "| 단계 | 이름 | 결과 |", "|---|---|---|"]
     lines += [f"| {n} | {t} | {s} |" for n, t, s, _ in results]
+    lines += ["", "## 문제 분석", "", "```", analysis, "```"]
     for n, t, s, rows in results:
         lines += ["", f"## {n}. {t}: {s}", "", "| 결과 | 대상 | 내용 |", "|---|---|---|"]
-        lines += [f"| {st} | {item} | {msg} |" for st, item, msg in rows]
-    (ROOT / "reports").mkdir(exist_ok=True)
-    (ROOT / "reports" / "report.md").write_text("\n".join(lines) + "\n")
+        lines += [f"| {st} | {item} | {msg} |" for st, item, msg, _ in rows]
+    out = ROOT / "reports"
+    out.mkdir(exist_ok=True)
+    (out / "report.md").write_text("\n".join(lines) + "\n")
+    (out / "analysis.txt").write_text(analysis + "\n")
 
 
 if __name__ == "__main__":
