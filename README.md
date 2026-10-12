@@ -8,16 +8,28 @@
 make
 ```
 
-순서대로 `생성(CadQuery) → 검증 0~7단계 → 그림` 을 실행한다. 결과는 `reports/report.md` 에 저장된다. 실패한 검사가 하나라도 있으면 종료 코드 1을 돌려준다.
+`요청>` 입력란이 나온다. 바꾸고 싶은 점을 적으면 다음을 반복한다:
+
+1. Claude 가 `engine/make_engine.py` 를 고친다 (`claude -p`, 도구 없이 코드만 생성)
+2. CadQuery 로 부품 생성 → 검증 0~7단계
+3. 실패하면 실패 줄을 붙여 다시 요청 (최대 3회, `MAX_TRIES=5 make` 로 변경)
+4. 통과하면 그림 생성. 3회 모두 실패하면 원래 설계로 되돌림
+
+매 시도는 `prompts/log.csv` 에 한 줄씩 자동 기록되고, 시도한 코드는 `prompts/attempts/` 에 남는다. 빈 줄을 입력하면 AI 없이 현재 설계로 생성, 검증, 그림만 한다.
+
+예: `크랭크축이 앞뒤로 움직이는 문제를 고정 칼라로 막아줘`, `피스톤 지름을 24mm 로 키워줘`
 
 | 명령 | 하는 일 |
 |---|---|
+| `make check` | AI 없이 생성 → 검증 → 그림 |
 | `make build` | `engine/make_engine.py` 로 `parts/*.step`, `parts/*.stl`, `parts/assembly.json` 생성 |
 | `make verify` | `uv run verify.py`, 모든 단계 검증 (`--skip 6,7` 로 단계 건너뛰기) |
 | `make render` | `reports/engine.png`, `reports/engine.gif` 생성 |
 | `make test` | 일부러 망가뜨린 엔진 4종을 검증기가 잡는지 확인 |
 
-준비물: [uv](https://docs.astral.sh/uv/) (파이썬 패키지는 자동 설치), 6단계용 `brew install --cask prusaslicer` (없으면 6단계는 SKIP).
+AI 가 만든 코드는 이 PC 에서 그대로 실행된다. 결과는 `git diff` 로 확인하고 커밋한다.
+
+준비물: [uv](https://docs.astral.sh/uv/) (파이썬 패키지는 자동 설치), 로그인된 [Claude Code](https://claude.com/claude-code) CLI (`make` 의 AI 단계), 6단계용 `brew install --cask prusaslicer` (없으면 6단계는 SKIP).
 
 ## 검증 단계
 
@@ -45,7 +57,7 @@ make
 | 크랭크핀, 저널 | ⌀6, 웹 구멍 ⌀5.95 (압입), 로드와 베어링 구멍 ⌀6.4 |
 | 피스톤 핀 | ⌀4, 피스톤 구멍 ⌀3.95 (압입), 로드 구멍 ⌀4.4 |
 
-부품 35개: 블록, 커버(투명), 받침, 베어링 블록 2, 손잡이, 저널 5, 웹 8, 크랭크핀 4, 로드 4, 피스톤 4, 피스톤 핀 4. 결합 43곳. 못, 나사, 접착제 없이 핀과 압입으로만 조립한다.
+부품 37개: 블록, 커버(투명), 받침, 베어링 블록 2, 손잡이, 저널 5, 웹 8, 크랭크핀 4, 고정 칼라 2, 로드 4, 피스톤 4, 피스톤 핀 4. 결합 45곳. 크랭크축 축 방향 유격 최대 0.28. 못, 나사, 접착제 없이 핀과 압입으로만 조립한다.
 
 ## 다른 도구로 만든 부품을 검증하려면
 

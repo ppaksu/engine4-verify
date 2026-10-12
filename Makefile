@@ -1,4 +1,7 @@
-all: build verify render
+all:
+	uv run agent.py
+
+check: build verify render
 
 build:
 	uv run --group demo engine/make_engine.py
@@ -12,4 +15,4 @@ render:
 test:
 	uv run --group demo python tests/check_pipeline.py
 
-.PHONY: all build verify render test
+.PHONY: all check build verify render test

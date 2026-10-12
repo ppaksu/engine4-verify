@@ -3,6 +3,11 @@
 부품마다 parts/<이름>.step + .stl, 조립 정보 parts/assembly.json 을 만든다.
 좌표 규칙: 크랭크축 = X축(원점 통과), 실린더 = +Z 방향.
 모든 부품은 크랭크 각 0도(1번 실린더 상사점)의 조립 위치 그대로 저장한다.
+
+축 방향 유격: 앞 베어링 양옆에 저널 압입 칼라 2개(스러스트 베어링 역할).
+  - 바깥 칼라는 손잡이 면에, 안쪽 칼라는 웹 1A 면에 맞닿아 위치가 형상으로 정해진다.
+  - 칼라-베어링 틈 0.08 x 2 = 0.16, 베어링 위치핀 여유 0.12 -> 받침 대비 최대 0.28.
+  - 뒤 베어링은 칼라 없이 축 방향으로 자유(이중 구속 방지).
 """
 import json
 import math
@@ -25,6 +30,7 @@ RUN = 0.4                   # 회전부 지름 여유
 PIN = 4.0                   # 피스톤 핀, 고정 핀 지름
 PIN_PRESS = 3.95
 LOCATE = 4.2                # 위치 맞춤 핀 구멍 (+0.2)
+BEAR_LOCATE = 4.12          # 베어링 위치 맞춤 구멍 (+0.12, 축 방향 유격 줄이기)
 PISTON_D = 20.0
 BORE = 20.5                 # 피스톤 미끄럼 여유 0.5
 
@@ -32,6 +38,9 @@ WEB_T = 3.0                 # 크랭크 웹 두께
 GAP = 4.6                   # 웹 사이 (로드 4 + 양쪽 0.3)
 ROD_T = 4.0
 WEB_W = 13.0                # 웹 폭
+
+COLLAR_D = 12.0             # 고정 칼라 바깥지름 (벽 약 3)
+THRUST_GAP = 0.08           # 칼라와 베어링 면 사이 틈 (한쪽)
 
 BLOCK_Z = (27.0, 64.0)      # 실린더 블록 몸통
 FLANGE_Z = (24.0, 27.0)     # 블록 아래 플랜지
@@ -115,7 +124,7 @@ def base():
         b = b.union(zcyl(*FLANGE_Z, x, y, PIN))
     for x0, x1 in BEARING_X.values():
         for y in (-6, 6):
-            b = b.cut(zcyl(*BASE_Z, (x0 + x1) / 2, y, LOCATE))
+            b = b.cut(zcyl(*BASE_Z, (x0 + x1) / 2, y, BEAR_LOCATE))
     return b
 
 
@@ -124,6 +133,11 @@ def handle():
     arm = (cq.Workplane("YZ", origin=(x0, 0, 0)).center(0, 11)
            .slot2D(22 + 12, 12, 90).extrude(x1 - x0))
     return arm.cut(xcyl(x0, x1, 0, 0, PRESS)).union(xcyl(x0 - 12, x0, 0, 22, 6.0))
+
+
+def collar(x0, x1):
+    """저널에 압입하는 고정 칼라 (축 방향 스토퍼)."""
+    return xcyl(x0, x1, 0, 0, COLLAR_D).cut(xcyl(x0, x1, 0, 0, PRESS))
 
 
 def build():
@@ -145,7 +159,7 @@ def build():
     for x, y in POSTS:
         fit("base", "block", (x, y, 25.5), "z", "locating")
 
-    # 조립식 크랭크축: 웹 8, 크랭크핀 4, 저널 5, 손잡이 1
+    # 조립식 크랭크축: 웹 8, 크랭크핀 4, 저널 5, 손잡이 1, 고정 칼라 2
     add("handle", handle(), motion="crank")
     journal_x = [(HANDLE_X[0], XS[0] - GAP / 2)]
     journal_x += [(XS[i] + GAP / 2, XS[i + 1] - GAP / 2) for i in range(3)]
@@ -155,6 +169,17 @@ def build():
     fit("journal_0", "handle", (sum(HANDLE_X) / 2, 0, 0), "x", "press")
     fit("journal_0", "bearing_front", (sum(BEARING_X["front"]) / 2, 0, 0), "x", "running")
     fit("journal_4", "bearing_rear", (sum(BEARING_X["rear"]) / 2, 0, 0), "x", "running")
+
+    # 앞 베어링 양옆 고정 칼라: 손잡이 면 / 웹 1A 면에 맞닿게 길이를 정함
+    fx0, fx1 = BEARING_X["front"]
+    web1a_x = XS[0] - GAP / 2 - WEB_T
+    collars = {
+        "collar_front_out": (HANDLE_X[1], fx0 - THRUST_GAP),
+        "collar_front_in": (fx1 + THRUST_GAP, web1a_x),
+    }
+    for name, (x0, x1) in collars.items():
+        add(name, collar(x0, x1), motion="crank")
+        fit("journal_0", name, ((x0 + x1) / 2, 0, 0), "x", "press")
 
     cylinders = []
     for i, (x, ph) in enumerate(zip(XS, PHASES), start=1):
