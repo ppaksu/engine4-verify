@@ -42,6 +42,7 @@ make
 | `make check` | AI 없이 생성 → 검증 → 그림 |
 | `make build` | `engine/make_engine.py` 로 `parts/*.step`, `parts/*.stl`, `parts/assembly.json` 생성 |
 | `make verify` | `uv run verify.py`, 모든 단계 검증 (`--skip 6,7` 로 단계 건너뛰기) |
+| `make show` | 지금 부품을 브라우저에서 3D 로 보기. 마우스로 돌리기·확대, 슬라이더/재생으로 크랭크 회전, 폭발 피스톤 빨간색 (`reports/show.html`) |
 | `make render` | `reports/engine.png`, `reports/engine.gif` 생성 (크랭크 10° 간격 2회전, 폭발 피스톤 빨간색) |
 | `make test` | 검증기 자체 테스트: 참고 엔진은 통과, 일부러 망가뜨린 4종은 FAIL 인지 |
 | `make clean` | 결과물(`parts/`, `reports/`) 삭제. `make check` 로 다시 만들 수 있음 |

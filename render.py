@@ -31,14 +31,14 @@ def color(name):
     return COLORS.get(name.split("_")[0], "#3a8f5c")   # 크랭크 부품 = 초록
 
 
-def load(parts, skip=("cover",)):
+def load(parts, skip=("cover",), faces=1500):
     asm = json.loads((parts / "assembly.json").read_text())
     meshes = {}
     for p in asm["parts"]:
         if p["name"] in skip:
             continue
         m = trimesh.load_mesh(parts / f"{p['name']}.stl")
-        meshes[p["name"]] = (m.simplify_quadric_decimation(face_count=1500) if len(m.faces) > 1500 else m, p["motion"])
+        meshes[p["name"]] = (m.simplify_quadric_decimation(face_count=faces) if len(m.faces) > faces else m, p["motion"])
     return asm, meshes
 
 

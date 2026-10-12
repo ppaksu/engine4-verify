@@ -12,6 +12,10 @@ verify:
 render:
 	uv run render.py
 
+# 지금 부품을 브라우저에서 3D 로 보기 (돌리기·확대·크랭크 회전)
+show:
+	uv run show.py
+
 test:
 	uv run --group demo python tests/check_pipeline.py
 
@@ -25,4 +29,4 @@ reset:
 	rm -rf parts reports prompts/attempts engine/make_engine.py
 	printf '날짜,부품,도구,프롬프트,첨부,결과,메모\n' > prompts/log.csv
 
-.PHONY: all check build verify render test clean reset
+.PHONY: all check build verify render show test clean reset
